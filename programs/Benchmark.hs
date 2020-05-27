@@ -36,7 +36,7 @@ obj2d_1 =
 
 -- | An extruded version of obj2d_1, should be identical to the website's example, and example5.escad.
 object1 :: SymbolicObj3
-object1 = extrudeRM 0 (Right twist) (Left 1) (Left (0,0)) obj2d_1 (Left 40)
+object1 = extrudeRM 0 (Right twist) (1 :: ℝ) (Left (0,0)) obj2d_1 (Left 40)
     where
       twist :: ℝ -> ℝ
       twist h = 35*cos(h*2*pi/60)
@@ -105,4 +105,3 @@ benchmarks =
 -- | Our entrypoint. Runs all benchmarks.
 main :: IO ()
 main = defaultMain benchmarks
-

@@ -74,7 +74,9 @@ import Graphics.Implicit.Definitions (ℝ, ℝ2, ℝ3, Box2,
                                                    ExtrudeRM,
                                                    RotateExtrude,
                                                    ExtrudeOnEdgeOf
-                                                  )
+                                                  ),
+                                        ToExtrudeScale,
+                                        toExtrudeScale
                                      )
 import Graphics.Implicit.MathUtil   (pack)
 import Graphics.Implicit.ObjectUtil (getBox2, getBox3, getImplicit2, getImplicit3)
@@ -243,14 +245,14 @@ extrudeR = ExtrudeR
 extrudeRotateR :: ℝ -> ℝ -> SymbolicObj2 -> ℝ -> SymbolicObj3
 extrudeRotateR = ExtrudeRotateR
 
-extrudeRM :: ℝ
+extrudeRM :: ToExtrudeScale s => ℝ
     -> Either ℝ (ℝ -> ℝ)
-    -> Either ℝ (ℝ -> ℝ)
+    -> s
     -> Either ℝ2 (ℝ -> ℝ2)
     -> SymbolicObj2
     -> Either ℝ (ℝ2 -> ℝ)
     -> SymbolicObj3
-extrudeRM = ExtrudeRM
+extrudeRM r t s = ExtrudeRM r t (toExtrudeScale s)
 
 rotateExtrude :: ℝ
     -> Maybe ℝ
@@ -294,4 +296,3 @@ pack2 (dx, dy) sep objs =
     in case pack ((0,0),(dx,dy)) sep withBoxes of
             (a, []) -> Just $ union $ fmap (\((x,y),obj) -> translate (x,y) obj) a
             _ -> Nothing
-

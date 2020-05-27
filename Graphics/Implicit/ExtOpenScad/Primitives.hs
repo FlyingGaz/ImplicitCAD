@@ -17,7 +17,7 @@ module Graphics.Implicit.ExtOpenScad.Primitives (primitiveModules) where
 
 import Prelude(Either(Left, Right), Bool(True, False), Maybe(Just, Nothing), ($), pure, either, id, (-), (==), (&&), (<), (*), cos, sin, pi, (/), (>), const, uncurry, fromInteger, round, (/=), (||), not, null, fmap, (<>), otherwise)
 
-import Graphics.Implicit.Definitions (ℝ, ℝ2, ℝ3, ℕ, SymbolicObj2, SymbolicObj3, fromℕtoℝ)
+import Graphics.Implicit.Definitions (ℝ, ℝ2, ℝ3, ℕ, SymbolicObj2, SymbolicObj3, ExtrudeScale(C1), fromℕtoℝ)
 
 import Graphics.Implicit.ExtOpenScad.Definitions (OVal (OObj2, OObj3, ONModule), ArgParser, Symbol(Symbol), StateC, SourcePosition)
 
@@ -428,7 +428,7 @@ extrude = moduleWithSuite "linear_extrude" $ \_ children -> do
         `doc` "center? (the z component)"
     twistArg  :: Either ℝ (ℝ  -> ℝ) <- argument "twist"  `defaultTo` Left 0
         `doc` "twist as we extrude, either a total amount to twist or a function..."
-    scaleArg  :: Either ℝ (ℝ  -> ℝ) <- argument "scale"  `defaultTo` Left 1
+    scaleArg  :: ExtrudeScale <- argument "scale"  `defaultTo` C1 1
         `doc` "scale according to this funciton as we extrude..."
     translateArg :: Either ℝ2 (ℝ -> ℝ2) <- argument "translate"  `defaultTo` Left (0,0)
         `doc` "translate according to this funciton as we extrude..."
@@ -451,8 +451,8 @@ extrude = moduleWithSuite "linear_extrude" $ \_ children -> do
                       Left constant -> constant == 0
                       Right _       -> False
         isScaleID = case scaleArg of
-                      Left constant -> constant == 1
-                      Right _       -> False
+                      C1 1 -> True
+                      _    -> False
         isTransID = case translateArg of
                       Left constant -> constant == (0,0)
                       Right _       -> False

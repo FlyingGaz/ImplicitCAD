@@ -70,13 +70,17 @@ module Graphics.Implicit.Definitions (
         ExtrudeRM,
         ExtrudeOnEdgeOf,
         RotateExtrude),
+    ExtrudeScale(C1, C2, F),
+    fromExtrudeScale,
+    ToExtrudeScale,
+    toExtrudeScale,
     fromℕtoℝ,
     fromFastℕtoℝ,
     fromℝtoFloat
     )
 where
 
-import Prelude (Show, Double, Either, show, (*), (/), fromIntegral, Float, realToFrac)
+import Prelude (Show, Double, Either(Left, Right), id, show, (.), (*), (/), fromIntegral, Float, realToFrac)
 
 import Data.Maybe (Maybe)
 
@@ -88,7 +92,7 @@ import Graphics.Implicit.IntegralUtil as N (ℕ, fromℕ, toℕ)
 
 import Control.DeepSeq (NFData, rnf)
 
--- Let's make things a bit nicer. 
+-- Let's make things a bit nicer.
 -- Following the math notation ℝ, ℝ², ℝ³...
 type ℝ = Double
 type ℝ2 = (ℝ,ℝ)
@@ -118,7 +122,7 @@ allthree f (x,y,z) = (f x, f y, f z)
 
 -- Wrap the functions that convert datatypes.
 
--- | Convert from our Integral to our Rational. 
+-- | Convert from our Integral to our Rational.
 fromℕtoℝ :: ℕ -> ℝ
 fromℕtoℝ = fromIntegral
 {-# INLINABLE fromℕtoℝ #-}
@@ -137,6 +141,9 @@ fromℝtoFloat = realToFrac
 --   FIXME: store functions in a dumpable form!
 --   These instances cover functions
 instance Show (ℝ -> ℝ) where
+    show _ = "<function ℝ>"
+
+instance Show (ℝ -> Either ℝ ℝ2) where
     show _ = "<function ℝ>"
 
 instance Show (ℝ -> ℝ2) where
@@ -254,7 +261,7 @@ data SymbolicObj3 =
     -- Primitives
       Rect3R ℝ ℝ3 ℝ3 -- rounding, start, stop.
     | Sphere ℝ -- radius
-    | Cylinder ℝ ℝ ℝ -- 
+    | Cylinder ℝ ℝ ℝ --
     -- (Rounded) CSG
     | Complement3 SymbolicObj3
     | UnionR3 ℝ [SymbolicObj3]
@@ -276,7 +283,7 @@ data SymbolicObj3 =
     | ExtrudeRM
         ℝ                     -- rounding radius
         (Either ℝ (ℝ -> ℝ))   -- twist
-        (Either ℝ (ℝ -> ℝ))   -- scale
+        ExtrudeScale          -- scale
         (Either ℝ2 (ℝ -> ℝ2)) -- translate
         SymbolicObj2          -- object to extrude
         (Either ℝ (ℝ2 -> ℝ))  -- height to extrude to
@@ -289,3 +296,41 @@ data SymbolicObj3 =
     | ExtrudeOnEdgeOf SymbolicObj2 SymbolicObj2
     deriving Show
 
+data ExtrudeScale =
+      C1 ℝ
+    | C2 ℝ2
+    | F (ℝ -> Either ℝ ℝ2)
+    deriving Show
+
+fromExtrudeScale :: ExtrudeScale -> ℝ -> ℝ2
+fromExtrudeScale (C1 s) _ = (s, s)
+fromExtrudeScale (C2 (sx, sy)) _ = (sx, sy)
+fromExtrudeScale (F f) h = case f h of
+    Left s -> (s, s)
+    Right s -> s
+
+class ToExtrudeScale s where
+    toExtrudeScale :: s -> ExtrudeScale
+
+instance ToExtrudeScale ExtrudeScale where
+    toExtrudeScale = id
+
+instance ToExtrudeScale ℝ where
+    toExtrudeScale = C1
+
+instance ToExtrudeScale ℝ2 where
+    toExtrudeScale = C2
+
+instance ToExtrudeScale (ℝ -> ℝ) where
+    toExtrudeScale f = F (Left . f)
+
+instance ToExtrudeScale (ℝ -> ℝ2) where
+    toExtrudeScale f = F (Right . f)
+
+instance ToExtrudeScale (ℝ -> Either ℝ ℝ2) where
+    toExtrudeScale = F
+
+-- DEPRECATED
+instance ToExtrudeScale (Either ℝ (ℝ -> ℝ)) where
+    toExtrudeScale (Left s) = toExtrudeScale s
+    toExtrudeScale (Right f) = toExtrudeScale f
